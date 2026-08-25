@@ -1,0 +1,22 @@
+report_comment: >
+  Long-read metagenomic resistome profiling. Read filtering, taxonomic
+  profiling, metagenome assembly, ARG calling and genomic context resolution.
+
+report_section_order:
+  software_versions:
+    order: -1000
+
+custom_data:
+  arg_context:
+    section_name: 'Resistome in context'
+    description: 'ARGs recovered from the assembly, split by inferred replicon type.'
+    plot_type: 'table'
+    pconfig:
+      id: 'arg_context_table'
+      namespace: 'ARG context'
+
+sp:
+  arg_context:
+    fn: '*_arg_context_mqc.tsv'
+
+export_plots: true

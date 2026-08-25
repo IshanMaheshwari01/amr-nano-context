@@ -1,0 +1,2 @@
+sample,fastq,truth_set
+zymo_even_gridion,data/zymo_even_sub.fastq.gz,truth/zymo_expected_resistome.tsv

@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install linters
+        run: pip install ruff
+
+      - name: Lint bin/ scripts
+        run: ruff check bin/
+
+  stub-run:
+    name: Stub run (channel wiring)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Nextflow
+        run: |
+          curl -fsSL https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+          nextflow -version
+
+      - name: Generate test fixtures
+        run: |
+          mkdir -p test-data/db_stub
+          python3 test-data/make_test_data.py
+
+      - name: Run pipeline in stub mode
+        run: |
+          nextflow run . -profile test -stub-run --outdir results_test
+
+      - name: Assert the resistome and validation outputs exist
+        run: |
+          test -f results_test/resistome/test_stub_arg_context.tsv
+          test -f results_test/validation/test_val_validation.json
+          echo "stub outputs present"
+
+      - name: Show what was produced
+        run: find results_test -type f | sort
+
+  unit-tests:
+    name: Python unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install
+        run: pip install pandas pytest
+
+      - name: Run tests
+        run: pytest tests/ -v
