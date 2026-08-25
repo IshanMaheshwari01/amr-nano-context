@@ -61,15 +61,31 @@ K2_URL='<paste the Standard-8 link here>' bash scripts/02_get_databases.sh
 That fetches Kraken2 (about 8 GB) and geNomad (about 1.5 GB). The geNomad download runs
 inside its own container, so Docker must be working first.
 
-## 3. Data, 60 to 120 minutes
+## 3. Data, 30 to 60 minutes
 
 ```bash
 bash scripts/01_get_data.sh ERR3152364 1500000000
 ```
 
-ERR3152364 is the GridION run of the ZymoBIOMICS Even community. The script resolves the
-FASTQ URL through the ENA API rather than hardcoding it, downloads, and subsamples to
-roughly 1.5 Gbp. Resume is enabled (`curl -C -`) so a dropped connection is not fatal.
+ERR3152364 is the GridION run of the ZymoBIOMICS Even community: 3.49M reads, 14.4 Gbp,
+about 14 GB compressed. The script resolves the FASTQ URL through the ENA API rather than
+hardcoding it, then streams the file through `scripts/take_bases.py`, which decompresses
+on the fly and stops once the base target is met. curl gets SIGPIPE and quits, so only
+about a tenth of the file crosses the network.
+
+ENA's HTTPS endpoint drops connections fairly often on long transfers. The script retries
+up to five times; raise it with `MAX_ATTEMPTS=10` if your connection is bad.
+
+Streaming is not resumable. If it keeps failing, take the whole file instead, which is:
+
+```bash
+FULL_DOWNLOAD=1 bash scripts/01_get_data.sh ERR3152364 1500000000
+```
+
+That needs 14 GB of disk and an hour or more, but `curl -C -` picks up where it left off,
+so repeated dropouts cost nothing. Use it if you want the full dataset for later anyway.
+
+To redo a subsample you already have, set `FORCE=1`.
 
 It also fetches the Illumina isolate assemblies used to build the truth set.
 

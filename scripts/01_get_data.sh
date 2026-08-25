@@ -29,39 +29,47 @@ if [ -z "$FTP" ]; then
     exit 1
 fi
 
-RAW="$OUTDIR/${ACCESSION}.fastq.gz"
-if [ ! -f "$RAW" ]; then
-    echo "==> Downloading $FTP"
-    echo "    This is large. Expect 30-90 minutes on domestic broadband."
-    curl -fL --retry 5 -C - "https://${FTP}" -o "$RAW"
-else
-    echo "==> $RAW already present, skipping download"
-fi
-
 SUB="$OUTDIR/zymo_even_sub.fastq.gz"
-echo "==> Subsampling to approximately ${TARGET_BASES} bases -> $SUB"
 
-# Head-based subsample. Nanopore runs are roughly time-ordered rather than
-# quality-ordered, so taking the head biases slightly towards early reads.
-# rasusa would be better if available; this keeps the dependency list short.
-python3 - "$RAW" "$SUB" "$TARGET_BASES" <<'PY'
-import gzip, sys
-src, dst, target = sys.argv[1], sys.argv[2], int(sys.argv[3])
-total = 0
-kept = 0
-with gzip.open(src, "rt") as fin, gzip.open(dst, "wt", compresslevel=4) as fout:
-    while total < target:
-        head = fin.readline()
-        if not head:
-            break
-        seq  = fin.readline()
-        plus = fin.readline()
-        qual = fin.readline()
-        fout.write(head); fout.write(seq); fout.write(plus); fout.write(qual)
-        total += len(seq.strip())
-        kept += 1
-print(f"kept {kept} reads, {total} bases", file=sys.stderr)
-PY
+# Stream rather than download the whole 14 GB file. take_bases.py decompresses on
+# the fly and exits once the target is met; curl then gets SIGPIPE and stops. For
+# a 1.5 Gbp target that transfers roughly a tenth of the file.
+#
+# Set FULL_DOWNLOAD=1 to fetch the entire run to disk instead. That is resumable
+# with curl -C -, which streaming is not, so it is the better option on a very
+# unreliable connection or if you want the whole dataset for later.
+
+if [ -f "$SUB" ] && [ "${FORCE:-0}" != "1" ]; then
+    echo "==> $SUB already present. Set FORCE=1 to redo it."
+elif [ "${FULL_DOWNLOAD:-0}" = "1" ]; then
+    RAW="$OUTDIR/${ACCESSION}.fastq.gz"
+    echo "==> Full download to $RAW (resumable)"
+    curl -fL --retry 10 --retry-delay 5 --retry-all-errors -C - "https://${FTP}" -o "$RAW"
+    echo "==> Subsampling to approximately ${TARGET_BASES} bases"
+    python3 scripts/take_bases.py "$TARGET_BASES" "$SUB" < "$RAW"
+else
+    echo "==> Streaming approximately ${TARGET_BASES} bases into $SUB"
+    echo "    Transfers only what is needed. Not resumable: if it drops, re-run."
+
+    ATTEMPT=1
+    MAX_ATTEMPTS="${MAX_ATTEMPTS:-5}"
+    until curl -fsSL --retry 10 --retry-delay 5 --retry-all-errors \
+               --speed-time 60 --speed-limit 10000 "https://${FTP}" \
+          | python3 scripts/take_bases.py "$TARGET_BASES" "$SUB"
+    do
+        if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+            echo
+            echo "Gave up after $ATTEMPT attempts. $SUB holds whatever was retrieved." >&2
+            echo "Options: re-run, lower TARGET_BASES, or use FULL_DOWNLOAD=1 for a" >&2
+            echo "resumable transfer." >&2
+            exit 1
+        fi
+        ATTEMPT=$((ATTEMPT + 1))
+        echo
+        echo "==> Transfer interrupted. Retrying, attempt $ATTEMPT of $MAX_ATTEMPTS."
+        sleep 10
+    done
+fi
 
 echo
 echo "==> Reference genomes for the truth set"

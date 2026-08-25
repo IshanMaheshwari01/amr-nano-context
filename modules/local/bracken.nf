@@ -21,7 +21,7 @@ process BRACKEN {
         -d ${db} \\
         -i ${report} \\
         -o ${meta.id}.bracken.tsv \\
-        -r 150 \\
+        -r 300 \\
         -l S \\
         -t 10
 
