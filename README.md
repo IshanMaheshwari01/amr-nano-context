@@ -105,7 +105,9 @@ Full step by step, including timings and what to do when a step fails, is in
 
 ## Requirements
 
-Nextflow 24.04 or later, Docker, Java 17, and roughly 60 GB of free disk. Kraken2
+Nextflow 24.04 or later, Docker, Java 17, and roughly 60 GB of free disk. The stub run is
+verified on Nextflow 24.10.5 and 26.04.6; the config avoids variable and method declarations
+in config files, which Nextflow 26's parser rejects. Kraken2
 Standard-8 holds about 8 GB resident while it runs, so 16 GB of RAM is the practical
 floor. The `laptop` profile caps resources at 6 CPUs and 12 GB.
 

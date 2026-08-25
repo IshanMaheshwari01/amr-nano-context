@@ -8,8 +8,6 @@
  * most likely belongs to. Short-read resistome profiling reports the gene alone.
  */
 
-nextflow.enable.dsl = 2
-
 include { SEQKIT_STATS      } from './modules/local/seqkit_stats'
 include { NANOQ             } from './modules/local/nanoq'
 include { NANOPLOT          } from './modules/local/nanoplot'
@@ -49,9 +47,14 @@ def helpMessage() {
     """.stripIndent()
 }
 
-if (params.help) { helpMessage(); exit 0 }
-
 workflow {
+
+    // Nextflow 26 does not allow statements at the top level of a script, so
+    // these live inside the entry workflow rather than above it.
+    if (params.help) {
+        helpMessage()
+        return
+    }
 
     if (!params.input)  { error "Missing --input samplesheet. Run with --help." }
     if (!params.outdir) { error "Missing --outdir." }
@@ -138,10 +141,4 @@ workflow {
     ch_versions
         .unique()
         .collectFile(name: 'software_versions.yml', storeDir: "${params.outdir}/pipeline_info")
-}
-
-workflow.onComplete {
-    log.info( workflow.success
-        ? "\nDone. Results in ${params.outdir}\n"
-        : "\nFailed after ${workflow.duration}. See .nextflow.log\n" )
 }

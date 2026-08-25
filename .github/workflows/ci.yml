@@ -25,8 +25,14 @@ jobs:
         run: ruff check bin/
 
   stub-run:
-    name: Stub run (channel wiring)
+    name: Stub run (Nextflow ${{ matrix.nextflow }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest supported and current. Nextflow 26 tightened the config parser,
+        # so testing only one of these would let the other rot.
+        nextflow: ['24.10.5', 'latest']
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +43,8 @@ jobs:
           java-version: '17'
 
       - name: Install Nextflow
+        env:
+          NXF_VER: ${{ matrix.nextflow }}
         run: |
           curl -fsSL https://get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
@@ -48,6 +56,8 @@ jobs:
           python3 test-data/make_test_data.py
 
       - name: Run pipeline in stub mode
+        env:
+          NXF_VER: ${{ matrix.nextflow }}
         run: |
           nextflow run . -profile test -stub-run --outdir results_test
 
