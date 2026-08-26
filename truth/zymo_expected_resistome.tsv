@@ -1,0 +1,103 @@
+gene	drug_class	expected_host
+mphK	MACROLIDE	Bacillus_subtilis
+vmlR	LINCOSAMIDE/PLEUROMUTILIN/STREPTOGRAMIN	Bacillus_subtilis
+cadA	CADMIUM	Enterococcus_faecalis
+cadC	CADMIUM	Enterococcus_faecalis
+arsB	ARSENIC	Enterococcus_faecalis
+arsA	ARSENIC	Enterococcus_faecalis
+arsR	ARSENIC	Enterococcus_faecalis
+arsD	ARSENIC	Enterococcus_faecalis
+arsD2	ARSENIC	Enterococcus_faecalis
+lsa(A)	LINCOSAMIDE/STREPTOGRAMIN	Enterococcus_faecalis
+emrD	EFFLUX	Escherichia_coli
+ariR		Escherichia_coli
+acrF	EFFLUX	Escherichia_coli
+mdtM	EFFLUX	Escherichia_coli
+fieF		Escherichia_coli
+asr		Escherichia_coli
+terD	TELLURIUM	Escherichia_coli
+terZ	TELLURIUM	Escherichia_coli
+terW	TELLURIUM	Escherichia_coli
+mchF		Escherichia_coli
+mchB		Escherichia_coli
+iha		Escherichia_coli
+blaEC	BETA-LACTAM	Escherichia_coli
+aaiC		Escherichia_coli
+fdeC		Escherichia_coli
+iucA		Escherichia_coli
+iucB		Escherichia_coli
+iucC		Escherichia_coli
+iucD		Escherichia_coli
+iutA		Escherichia_coli
+sat		Escherichia_coli
+pic		Escherichia_coli
+inlK		Listeria_monocytogenes
+vga(G)	LINCOSAMIDE	Listeria_monocytogenes
+inl-lmo0514		Listeria_monocytogenes
+inlI		Listeria_monocytogenes
+inlB		Listeria_monocytogenes
+lntA		Listeria_monocytogenes
+inlC		Listeria_monocytogenes
+inlP		Listeria_monocytogenes
+cadA	CADMIUM	Listeria_monocytogenes
+cadC	CADMIUM	Listeria_monocytogenes
+arsB	ARSENIC	Listeria_monocytogenes
+arsA	ARSENIC	Listeria_monocytogenes
+arsR	ARSENIC	Listeria_monocytogenes
+arsD	ARSENIC	Listeria_monocytogenes
+arsD2	ARSENIC	Listeria_monocytogenes
+fosX	FOSFOMYCIN	Listeria_monocytogenes
+fosA	FOSFOMYCIN	Pseudomonas_aeruginosa
+blaOXA-486	BETA-LACTAM	Pseudomonas_aeruginosa
+merE	MERCURY	Pseudomonas_aeruginosa
+merD	MERCURY	Pseudomonas_aeruginosa
+merF	MERCURY	Pseudomonas_aeruginosa
+merP	MERCURY	Pseudomonas_aeruginosa
+merT	MERCURY	Pseudomonas_aeruginosa
+merR	MERCURY	Pseudomonas_aeruginosa
+crpP	FLUOROQUINOLONE	Pseudomonas_aeruginosa
+blaPDC-3	BETA-LACTAM	Pseudomonas_aeruginosa
+aph(3')-IIb	AMINOGLYCOSIDE	Pseudomonas_aeruginosa
+catB7	PHENICOL	Pseudomonas_aeruginosa
+mexX	EFFLUX	Pseudomonas_aeruginosa
+mexA	EFFLUX	Pseudomonas_aeruginosa
+mexE	EFFLUX	Pseudomonas_aeruginosa
+fieF		Salmonella_enterica
+spvD		Salmonella_enterica
+golS	GOLD	Salmonella_enterica
+golT	COPPER/GOLD	Salmonella_enterica
+mdsA	EFFLUX	Salmonella_enterica
+mdsB	EFFLUX	Salmonella_enterica
+sodC1		Salmonella_enterica
+sinH		Salmonella_enterica
+lpfB		Salmonella_enterica
+gtgA		Salmonella_enterica
+iroB		Salmonella_enterica
+iroC		Salmonella_enterica
+invA		Salmonella_enterica
+sey		Staphylococcus_aureus
+mco	COPPER	Staphylococcus_aureus
+mepA	TETRACYCLINE	Staphylococcus_aureus
+blaI	BETA-LACTAM	Staphylococcus_aureus
+blaR1	BETA-LACTAM	Staphylococcus_aureus
+blaPC1	BETA-LACTAM	Staphylococcus_aureus
+hld		Staphylococcus_aureus
+selX		Staphylococcus_aureus
+tet(38)	TETRACYCLINE	Staphylococcus_aureus
+sel27		Staphylococcus_aureus
+sel28		Staphylococcus_aureus
+seo		Staphylococcus_aureus
+sem		Staphylococcus_aureus
+sei		Staphylococcus_aureus
+seu		Staphylococcus_aureus
+sen		Staphylococcus_aureus
+fosB	FOSFOMYCIN	Staphylococcus_aureus
+hlgA		Staphylococcus_aureus
+hlgC		Staphylococcus_aureus
+hlgB		Staphylococcus_aureus
+aadD1	AMINOGLYCOSIDE	Staphylococcus_aureus
+tet(L)	TETRACYCLINE	Staphylococcus_aureus
+qacG	QUATERNARY AMMONIUM	Staphylococcus_aureus
+lmrS	MACROLIDE/PHENICOL	Staphylococcus_aureus
+icaC		Staphylococcus_aureus
+aur		Staphylococcus_aureus

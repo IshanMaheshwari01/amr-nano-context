@@ -5,6 +5,7 @@ process AMRFINDERPLUS {
 
     input:
     tuple val(meta), path(assembly)
+    path db
 
     output:
     tuple val(meta), path("${meta.id}_amrfinder.tsv"), emit: report
@@ -12,10 +13,21 @@ process AMRFINDERPLUS {
 
     script:
     """
-    # The container ships with a bundled database. Updating it inside the task
-    # would break reproducibility, so the shipped version is used and recorded.
+    # The biocontainer ships without a database, so it is mounted in rather than
+    # downloaded at runtime: fetching inside the task would give a different
+    # database on every run and make results non-reproducible.
+    #
+    # 'latest' is a symlink to the versioned directory in a normal install; some
+    # layouts point straight at the versioned directory instead.
+    if [ -d "${db}/latest" ]; then
+        DB_DIR="${db}/latest"
+    else
+        DB_DIR="${db}"
+    fi
+
     amrfinder \\
         --nucleotide ${assembly} \\
+        --database "\$DB_DIR" \\
         --plus \\
         --threads ${task.cpus} \\
         --output ${meta.id}_amrfinder.tsv \\
@@ -24,7 +36,7 @@ process AMRFINDERPLUS {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         amrfinderplus: \$(amrfinder --version)
-        amrfinderplus_db: \$(amrfinder --database_version 2>&1 | grep -i 'database version' | sed 's/.*: //' || echo 'unknown')
+        amrfinderplus_db: \$(basename \$(readlink -f "\$DB_DIR"))
     END_VERSIONS
     """
 

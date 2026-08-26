@@ -61,6 +61,20 @@ K2_URL='<paste the Standard-8 link here>' bash scripts/02_get_databases.sh
 That fetches Kraken2 (about 8 GB) and geNomad (about 1.5 GB). The geNomad download runs
 inside its own container, so Docker must be working first.
 
+PlusPF-8 rather than Standard-8: the mock community includes two yeasts, and Standard has
+no fungal genomes at all, so they would come back unclassified with no way to tell a real
+absence from a gap in the database. Same 8 GB cap either way.
+
+AMRFinderPlus needs a third database. Its container ships the binary without one, and
+downloading inside each task would mean a different database on every run:
+
+```bash
+bash scripts/03_get_amrfinder_db.sh
+```
+
+Note the version it prints. The truth set and the pipeline must use the same one, or the
+validation is comparing against a different reference than it ran with.
+
 ## 3. Data, 30 to 60 minutes
 
 ```bash
@@ -91,59 +105,83 @@ It also fetches the Illumina isolate assemblies used to build the truth set.
 
 ## 4. Truth set, 15 minutes
 
-Look at the FASTA headers before splitting, because the format has changed between
-releases:
+The combined isolate FASTA labels contigs with a two-letter organism prefix
+(`>lf_contig1` is *Lactobacillus fermentum*). Check what is in yours:
 
 ```bash
 grep '>' refs/Zymo-Isolates-SPAdes-Illumina.fasta | head
 ```
 
-Then split and adjust `--pattern` if the default regex does not fit:
+Then split. Files are written under full organism names, not the prefixes, because
+`build_truth_set.py` takes `expected_host` from the filename stem and
+`validate_resistome.py` compares that against Kraken2 taxon names at genus level. A
+file called `lf.fasta` would compare genus `lf` against `Lactobacillus` and score every
+host attribution wrong.
 
 ```bash
-python3 scripts/split_refs.py \
+python3 scripts/split_zymo_refs.py \
     --fasta refs/Zymo-Isolates-SPAdes-Illumina.fasta \
-    --outdir refs/per_organism
-ls refs/per_organism
+    --outdir refs/per_organism --list-only
 ```
 
-You want roughly ten files, one per organism. Then build the expected resistome. This
-needs `amrfinder`, easiest via the container:
+That reports the organisms and writes nothing. If it looks right, drop `--list-only`.
+An unrecognised prefix is a hard error rather than a warning: dropping a genome would
+quietly shrink the truth set and make precision look better than it is.
+
+The two yeasts should be moved aside first. AMRFinderPlus is a bacterial tool, and at
+2% abundance neither assembles at this depth anyway:
+
+```bash
+mkdir -p refs/excluded
+mv refs/per_organism/Cryptococcus_neoformans.fasta \
+   refs/per_organism/Saccharomyces_cerevisiae.fasta refs/excluded/
+```
+
+Then build the expected resistome. The script runs on the host and shells out to the
+container for amrfinder, because the biocontainer has no python3:
 
 ```bash
 mkdir -p truth
-docker run --rm -v "$PWD":/work -w /work \
-    quay.io/biocontainers/ncbi-amrfinderplus:4.0.19--hf69ffd2_0 \
-    bash -c "amrfinder -u || true"   # updates the bundled DB once, optional
-
 python3 bin/build_truth_set.py \
     --genome-dir refs/per_organism \
     --out truth/zymo_expected_resistome.tsv \
-    --amrfinder-cmd amrfinder
+    --amrfinder-cmd ./scripts/amrfinder-docker
 ```
 
-If `amrfinder` is not on your host PATH, run the whole script inside the container:
+Sanity check:
 
 ```bash
-docker run --rm -v "$PWD":/work -w /work \
-    quay.io/biocontainers/ncbi-amrfinderplus:4.0.19--hf69ffd2_0 \
-    python3 bin/build_truth_set.py --genome-dir refs/per_organism \
-        --out truth/zymo_expected_resistome.tsv
+wc -l truth/zymo_expected_resistome.tsv
+cut -f3 truth/zymo_expected_resistome.tsv | sort | uniq -c
 ```
 
-Sanity check: `wc -l truth/zymo_expected_resistome.tsv`. The Zymo community is not
-heavily resistant, so expect on the order of ten to forty entries, dominated by
-intrinsic genes in *Enterococcus faecalis* and *Staphylococcus aureus*. A file with two
-rows means the split did not work.
+The Zymo community is not heavily resistant, so expect on the order of ten to forty
+rows, dominated by intrinsic genes in *Enterococcus faecalis* and *Staphylococcus
+aureus*. A file with two rows means the split did not work.
 
-## 5. The run, 4 to 8 hours
+## 5. Check the container tags, 30 seconds
+
+Biocontainer tags carry a build hash and are removed when a package is rebuilt, so a pin
+that worked last month can 404 today. Finding that out four hours into a metaFlye run is
+expensive:
+
+```bash
+bash scripts/check_containers.sh
+```
+
+It queries the registry without pulling anything, and for any tag that has gone it lists
+the tags that do exist. Fix them in `conf/containers.config`, which is the only file that
+names a container, and re-run the check.
+
+## 6. The run, 4 to 8 hours
 
 ```bash
 nextflow run . -profile docker,laptop \
     --input assets/samplesheet_zymo.csv \
     --outdir results \
-    --kraken2_db databases/k2_standard_08gb \
+    --kraken2_db databases/k2_pluspf_08gb \
     --genomad_db databases/genomad_db \
+    --amrfinder_db databases/amrfinderplus \
     -resume
 ```
 
@@ -159,7 +197,7 @@ Watch it from another terminal:
 tail -f .nextflow.log
 ```
 
-## 6. Read the results
+## 7. Read the results
 
 ```
 results/
@@ -178,7 +216,7 @@ column -t -s$'\t' results/resistome/zymo_even_gridion_arg_context.tsv | less -S
 cat results/validation/zymo_even_gridion_validation.json
 ```
 
-## 7. Write down what happened
+## 8. Write down what happened
 
 Fill in `docs/VALIDATION.md` with your actual numbers, including the misses. A validation
 document that reports recall of 1.00 and no caveats reads as untested. One that says
@@ -189,12 +227,19 @@ members, which metaFlye did not assemble well at this depth" reads as someone wh
 
 **`docker: permission denied`** - you have not re-logged since the install. `newgrp docker`.
 
-**Container pull 404** - a biocontainer tag has moved. Find the current tag at
-`https://quay.io/repository/biocontainers/<tool>?tab=tags` and edit
-`conf/containers.config`. That is the only file that needs changing.
+**Container pull 404** - a biocontainer tag has been removed. Run
+`bash scripts/check_containers.sh`, which checks every tag and suggests replacements.
+Edit `conf/containers.config`; it is the only file that names a container.
 
 **Killed at Flye, exit 137** - out of memory. Drop `--max_memory` in the run command, or
 subsample to fewer bases and rerun step 3.
+
+**AMRFinderPlus reports no valid database** - the container has none bundled. Run
+`bash scripts/03_get_amrfinder_db.sh` and pass `--amrfinder_db databases/amrfinderplus`.
+
+**A container writes files you cannot delete** - Docker ran as root. Every docker call in
+this repo passes `-u "$(id -u):$(id -g)"`; if you add one, do the same. To recover:
+`sudo chown -R "$USER:$USER" <path>`.
 
 **Kraken2 exits immediately with a database error** - the extracted directory must
 contain `hash.k2d`, `opts.k2d` and `taxo.k2d` at its top level. If they are one directory

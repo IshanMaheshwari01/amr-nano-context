@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Makes `amrfinder` usable from the host as if locally installed, with the
+# project directory mounted at /work and the database mounted from
+# databases/amrfinderplus. Used by build_truth_set.py via --amrfinder-cmd so the
+# truth set is built with the same database the pipeline runs.
+
+set -euo pipefail
+
+DB="${AMRFINDER_DB:-databases/amrfinderplus}"
+
+exec docker run --rm -u "$(id -u):$(id -g)" \
+    -v "$PWD":/work -w /work \
+    -v "$PWD/$DB":/usr/local/share/amrfinderplus/data \
+    quay.io/biocontainers/ncbi-amrfinderplus:4.0.19--hf69ffd2_0 \
+    amrfinder "$@"

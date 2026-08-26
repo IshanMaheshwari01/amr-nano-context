@@ -28,13 +28,15 @@ def helpMessage() {
 
     Usage:
       nextflow run . -profile docker --input assets/samplesheet.csv --outdir results \\
-          --kraken2_db /path/to/k2_standard_08gb --genomad_db /path/to/genomad_db
+          --kraken2_db /path/to/k2_pluspf_08gb --genomad_db /path/to/genomad_db \\
+          --amrfinder_db /path/to/amrfinderplus
 
     Required:
       --input           CSV samplesheet: sample,fastq,truth_set
       --outdir          Output directory
       --kraken2_db      Path to an extracted Kraken2 database directory
       --genomad_db      Path to an extracted geNomad database directory
+      --amrfinder_db    Path to an AMRFinderPlus database directory
 
     Optional:
       --min_read_len    Minimum read length after filtering  [default: ${params.min_read_len}]
@@ -44,6 +46,7 @@ def helpMessage() {
       --min_arg_cov     Minimum percent coverage for an ARG call [default: ${params.min_arg_cov}]
       --plasmid_score   geNomad plasmid score to call plasmid    [default: ${params.plasmid_score}]
       --skip_validation Skip resistome validation even if truth_set is given
+      --skip_bracken    Skip Bracken abundance refinement
     """.stripIndent()
 }
 
@@ -89,15 +92,23 @@ workflow {
     ch_k2db = Channel.value(file(params.kraken2_db, checkIfExists: true))
 
     KRAKEN2_READS( NANOQ.out.reads, ch_k2db )
-    BRACKEN( KRAKEN2_READS.out.report, ch_k2db )
-    ch_versions = ch_versions.mix(KRAKEN2_READS.out.versions, BRACKEN.out.versions)
+    ch_versions = ch_versions.mix(KRAKEN2_READS.out.versions)
+
+    // Bracken refines Kraken2's abundance estimates and feeds nothing downstream,
+    // so it is skippable. Its long-read caveat is large anyway (see the module).
+    if (!params.skip_bracken) {
+        BRACKEN( KRAKEN2_READS.out.report, ch_k2db )
+        ch_versions = ch_versions.mix(BRACKEN.out.versions)
+    }
 
     // ---- assembly ---------------------------------------------------------
     FLYE( NANOQ.out.reads )
     ch_versions = ch_versions.mix(FLYE.out.versions)
 
     // ---- resistome + context ----------------------------------------------
-    AMRFINDERPLUS( FLYE.out.assembly )
+    ch_amrdb = Channel.value(file(params.amrfinder_db, checkIfExists: true))
+
+    AMRFINDERPLUS( FLYE.out.assembly, ch_amrdb )
     ABRICATE( FLYE.out.assembly )
     KRAKEN2_CONTIGS( FLYE.out.assembly, ch_k2db )
 

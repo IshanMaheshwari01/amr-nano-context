@@ -80,24 +80,27 @@ bash scripts/00_setup_ubuntu.sh
 nextflow run . -profile test -stub-run --outdir results_test
 
 # databases (about 10 GB total, one-off)
-K2_URL='<Standard-8 link from https://benlangmead.github.io/aws-indexes/k2>' \
+K2_URL='<PlusPF-8 link from https://benlangmead.github.io/aws-indexes/k2>' \
   bash scripts/02_get_databases.sh
+bash scripts/03_get_amrfinder_db.sh
 
 # data
 bash scripts/01_get_data.sh ERR3152364 1500000000
 
 # truth set
-python3 scripts/split_refs.py --fasta refs/Zymo-Isolates-SPAdes-Illumina.fasta \
+python3 scripts/split_zymo_refs.py --fasta refs/Zymo-Isolates-SPAdes-Illumina.fasta \
     --outdir refs/per_organism
-bin/build_truth_set.py --genome-dir refs/per_organism \
-    --out truth/zymo_expected_resistome.tsv
+python3 bin/build_truth_set.py --genome-dir refs/per_organism \
+    --out truth/zymo_expected_resistome.tsv \
+    --amrfinder-cmd ./scripts/amrfinder-docker
 
 # the real run
 nextflow run . -profile docker,laptop \
     --input assets/samplesheet_zymo.csv \
     --outdir results \
-    --kraken2_db databases/k2_standard_08gb \
-    --genomad_db databases/genomad_db
+    --kraken2_db databases/k2_pluspf_08gb \
+    --genomad_db databases/genomad_db \
+    --amrfinder_db databases/amrfinderplus
 ```
 
 Full step by step, including timings and what to do when a step fails, is in
