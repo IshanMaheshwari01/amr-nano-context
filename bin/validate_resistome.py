@@ -10,6 +10,12 @@ Two metrics, because they measure different things:
                      organism? This is the metric that a short-read resistome
                      profile cannot produce at all, so it is the one worth
                      reporting.
+
+Both are reported for AMR elements alone and for everything AMRFinderPlus --plus
+returns. The distinction matters: --plus also reports STRESS (metal and biocide
+tolerance) and VIRULENCE elements. Those are worth having, but they are not
+resistance genes, and scoring them inside a figure called "resistome recall"
+measures the wrong thing.
 """
 
 from __future__ import annotations
@@ -47,6 +53,23 @@ def genus(taxon: str) -> str:
     return re.sub(r"[^a-z]", "", first.lower())
 
 
+def build_type_map(truth: pd.DataFrame, obs: pd.DataFrame) -> dict[str, str]:
+    """Element type per normalised gene, preferring the truth set's label.
+
+    A gene the pipeline called but the truth set does not contain has no truth
+    label, so its own reported type is used. Without that fallback every spurious
+    call would be typeless and silently excluded from the per-type figures.
+    """
+    types: dict[str, str] = {}
+    for frame in (obs, truth):
+        if "element_type" not in frame.columns:
+            continue
+        for gene, etype in zip(frame["gene_norm"], frame["element_type"]):
+            if gene and isinstance(etype, str) and etype.strip():
+                types[gene] = etype.strip().upper()
+    return types
+
+
 def prf(tp: int, fp: int, fn: int) -> dict:
     p = tp / (tp + fp) if (tp + fp) else 0.0
     r = tp / (tp + fn) if (tp + fn) else 0.0
@@ -79,6 +102,17 @@ def main() -> int:
 
     gene_metrics = prf(len(tp), len(fp), len(fn))
 
+    # Same calculation restricted to each element type.
+    type_map = build_type_map(truth, obs)
+    per_type = {}
+    for etype in sorted({t for t in type_map.values()}):
+        t_sub = {g for g in truth_genes if type_map.get(g) == etype}
+        o_sub = {g for g in obs_genes if type_map.get(g) == etype}
+        per_type[etype] = prf(
+            len(o_sub & t_sub), len(o_sub - t_sub), len(t_sub - o_sub)
+        )
+        per_type[etype]["missed"] = sorted(t_sub - o_sub)
+
     # Host attribution, scored only on genes we correctly found.
     truth_host = (
         truth.assign(g=truth["gene_norm"])
@@ -89,10 +123,12 @@ def main() -> int:
 
     rows = []
     correct_host = wrong_host = no_host = 0
+    amr_correct = amr_scored = 0
     for _, r in obs.iterrows():
         gn = r["gene_norm"]
         if gn not in tp:
             continue
+        is_amr = type_map.get(gn) == "AMR"
         assigned = genus(r.get("host_taxon", ""))
         expected = truth_host.get(gn, set())
         if not assigned or assigned in ("unclassified", "root"):
@@ -101,12 +137,18 @@ def main() -> int:
         elif assigned in expected:
             verdict = "correct"
             correct_host += 1
+            if is_amr:
+                amr_correct += 1
+                amr_scored += 1
         else:
             verdict = "incorrect"
             wrong_host += 1
+            if is_amr:
+                amr_scored += 1
         rows.append({
             "gene": r.get("gene", ""),
             "gene_norm": gn,
+            "element_type": type_map.get(gn, ""),
             "observed_host": r.get("host_taxon", ""),
             "expected_hosts": ";".join(sorted(expected)) if expected else "",
             "mobility": r.get("mobility", ""),
@@ -120,11 +162,14 @@ def main() -> int:
     # Per-gene outcome table, including the misses.
     outcome = []
     for g in sorted(tp):
-        outcome.append({"gene_norm": g, "outcome": "recovered"})
+        outcome.append({"gene_norm": g, "outcome": "recovered",
+                        "type": type_map.get(g, "")})
     for g in sorted(fn):
-        outcome.append({"gene_norm": g, "outcome": "missed"})
+        outcome.append({"gene_norm": g, "outcome": "missed",
+                        "type": type_map.get(g, "")})
     for g in sorted(fp):
-        outcome.append({"gene_norm": g, "outcome": "spurious"})
+        outcome.append({"gene_norm": g, "outcome": "spurious",
+                        "type": type_map.get(g, "")})
     outcome_df = pd.DataFrame(outcome)
 
     report = outcome_df.merge(detail, on="gene_norm", how="left")
@@ -133,14 +178,27 @@ def main() -> int:
 
     metrics = {
         "sample": args.sample,
-        "gene_recovery": gene_metrics,
-        "host_attribution": {
-            "scored": scored,
-            "correct": correct_host,
-            "incorrect": wrong_host,
-            "unassigned": no_host,
-            "accuracy": host_accuracy,
+        # Headline. AMR elements only, which is what "resistome" means.
+        "amr_only": {
+            "gene_recovery": per_type.get("AMR", prf(0, 0, 0)),
+            "host_attribution": {
+                "scored": amr_scored,
+                "correct": amr_correct,
+                "accuracy": round(amr_correct / amr_scored, 4) if amr_scored else 0.0,
+            },
         },
+        # Everything AMRFinderPlus --plus returns, including stress and virulence.
+        "all_elements": {
+            "gene_recovery": gene_metrics,
+            "host_attribution": {
+                "scored": scored,
+                "correct": correct_host,
+                "incorrect": wrong_host,
+                "unassigned": no_host,
+                "accuracy": host_accuracy,
+            },
+        },
+        "by_element_type": per_type,
         "missed_genes": sorted(fn),
         "spurious_genes": sorted(fp),
     }

@@ -17,9 +17,16 @@ process GENOMAD {
     path "versions.yml",                                     emit: versions
 
     script:
+    // mmseqs2 loads its target database into memory. On the default --splits 0
+    // (decide automatically) it assumes it can have the whole machine, and on a
+    // laptop the OOM killer takes it. Splitting the search trades runtime for
+    // peak memory. Escalating with task.attempt means a retry splits further
+    // rather than failing the same way twice.
+    def splits = (params.genomad_splits as int) * task.attempt
     """
     genomad end-to-end \\
         --cleanup \\
+        --splits ${splits} \\
         --threads ${task.cpus} \\
         ${assembly} \\
         genomad_out \\
@@ -28,7 +35,7 @@ process GENOMAD {
     # geNomad nests its outputs under a directory named after the input file.
     SUMMARY=\$(find genomad_out -name '*_aggregated_classification.tsv' | head -n1)
     if [ -z "\$SUMMARY" ]; then
-        echo "seq_name\\tchromosome_score\\tplasmid_score\\tvirus_score" > ${meta.id}_genomad_summary.tsv
+        printf 'seq_name\\tchromosome_score\\tplasmid_score\\tvirus_score\\n' > ${meta.id}_genomad_summary.tsv
     else
         cp "\$SUMMARY" ${meta.id}_genomad_summary.tsv
     fi

@@ -1,103 +1,103 @@
-gene	drug_class	expected_host
-mphK	MACROLIDE	Bacillus_subtilis
-vmlR	LINCOSAMIDE/PLEUROMUTILIN/STREPTOGRAMIN	Bacillus_subtilis
-cadA	CADMIUM	Enterococcus_faecalis
-cadC	CADMIUM	Enterococcus_faecalis
-arsB	ARSENIC	Enterococcus_faecalis
-arsA	ARSENIC	Enterococcus_faecalis
-arsR	ARSENIC	Enterococcus_faecalis
-arsD	ARSENIC	Enterococcus_faecalis
-arsD2	ARSENIC	Enterococcus_faecalis
-lsa(A)	LINCOSAMIDE/STREPTOGRAMIN	Enterococcus_faecalis
-emrD	EFFLUX	Escherichia_coli
-ariR		Escherichia_coli
-acrF	EFFLUX	Escherichia_coli
-mdtM	EFFLUX	Escherichia_coli
-fieF		Escherichia_coli
-asr		Escherichia_coli
-terD	TELLURIUM	Escherichia_coli
-terZ	TELLURIUM	Escherichia_coli
-terW	TELLURIUM	Escherichia_coli
-mchF		Escherichia_coli
-mchB		Escherichia_coli
-iha		Escherichia_coli
-blaEC	BETA-LACTAM	Escherichia_coli
-aaiC		Escherichia_coli
-fdeC		Escherichia_coli
-iucA		Escherichia_coli
-iucB		Escherichia_coli
-iucC		Escherichia_coli
-iucD		Escherichia_coli
-iutA		Escherichia_coli
-sat		Escherichia_coli
-pic		Escherichia_coli
-inlK		Listeria_monocytogenes
-vga(G)	LINCOSAMIDE	Listeria_monocytogenes
-inl-lmo0514		Listeria_monocytogenes
-inlI		Listeria_monocytogenes
-inlB		Listeria_monocytogenes
-lntA		Listeria_monocytogenes
-inlC		Listeria_monocytogenes
-inlP		Listeria_monocytogenes
-cadA	CADMIUM	Listeria_monocytogenes
-cadC	CADMIUM	Listeria_monocytogenes
-arsB	ARSENIC	Listeria_monocytogenes
-arsA	ARSENIC	Listeria_monocytogenes
-arsR	ARSENIC	Listeria_monocytogenes
-arsD	ARSENIC	Listeria_monocytogenes
-arsD2	ARSENIC	Listeria_monocytogenes
-fosX	FOSFOMYCIN	Listeria_monocytogenes
-fosA	FOSFOMYCIN	Pseudomonas_aeruginosa
-blaOXA-486	BETA-LACTAM	Pseudomonas_aeruginosa
-merE	MERCURY	Pseudomonas_aeruginosa
-merD	MERCURY	Pseudomonas_aeruginosa
-merF	MERCURY	Pseudomonas_aeruginosa
-merP	MERCURY	Pseudomonas_aeruginosa
-merT	MERCURY	Pseudomonas_aeruginosa
-merR	MERCURY	Pseudomonas_aeruginosa
-crpP	FLUOROQUINOLONE	Pseudomonas_aeruginosa
-blaPDC-3	BETA-LACTAM	Pseudomonas_aeruginosa
-aph(3')-IIb	AMINOGLYCOSIDE	Pseudomonas_aeruginosa
-catB7	PHENICOL	Pseudomonas_aeruginosa
-mexX	EFFLUX	Pseudomonas_aeruginosa
-mexA	EFFLUX	Pseudomonas_aeruginosa
-mexE	EFFLUX	Pseudomonas_aeruginosa
-fieF		Salmonella_enterica
-spvD		Salmonella_enterica
-golS	GOLD	Salmonella_enterica
-golT	COPPER/GOLD	Salmonella_enterica
-mdsA	EFFLUX	Salmonella_enterica
-mdsB	EFFLUX	Salmonella_enterica
-sodC1		Salmonella_enterica
-sinH		Salmonella_enterica
-lpfB		Salmonella_enterica
-gtgA		Salmonella_enterica
-iroB		Salmonella_enterica
-iroC		Salmonella_enterica
-invA		Salmonella_enterica
-sey		Staphylococcus_aureus
-mco	COPPER	Staphylococcus_aureus
-mepA	TETRACYCLINE	Staphylococcus_aureus
-blaI	BETA-LACTAM	Staphylococcus_aureus
-blaR1	BETA-LACTAM	Staphylococcus_aureus
-blaPC1	BETA-LACTAM	Staphylococcus_aureus
-hld		Staphylococcus_aureus
-selX		Staphylococcus_aureus
-tet(38)	TETRACYCLINE	Staphylococcus_aureus
-sel27		Staphylococcus_aureus
-sel28		Staphylococcus_aureus
-seo		Staphylococcus_aureus
-sem		Staphylococcus_aureus
-sei		Staphylococcus_aureus
-seu		Staphylococcus_aureus
-sen		Staphylococcus_aureus
-fosB	FOSFOMYCIN	Staphylococcus_aureus
-hlgA		Staphylococcus_aureus
-hlgC		Staphylococcus_aureus
-hlgB		Staphylococcus_aureus
-aadD1	AMINOGLYCOSIDE	Staphylococcus_aureus
-tet(L)	TETRACYCLINE	Staphylococcus_aureus
-qacG	QUATERNARY AMMONIUM	Staphylococcus_aureus
-lmrS	MACROLIDE/PHENICOL	Staphylococcus_aureus
-icaC		Staphylococcus_aureus
-aur		Staphylococcus_aureus
+gene	element_type	drug_class	expected_host
+mphK	AMR	MACROLIDE	Bacillus_subtilis
+vmlR	AMR	LINCOSAMIDE/PLEUROMUTILIN/STREPTOGRAMIN	Bacillus_subtilis
+cadA	STRESS	CADMIUM	Enterococcus_faecalis
+cadC	STRESS	CADMIUM	Enterococcus_faecalis
+arsB	STRESS	ARSENIC	Enterococcus_faecalis
+arsA	STRESS	ARSENIC	Enterococcus_faecalis
+arsR	STRESS	ARSENIC	Enterococcus_faecalis
+arsD	STRESS	ARSENIC	Enterococcus_faecalis
+arsD2	STRESS	ARSENIC	Enterococcus_faecalis
+lsa(A)	AMR	LINCOSAMIDE/STREPTOGRAMIN	Enterococcus_faecalis
+emrD	AMR	EFFLUX	Escherichia_coli
+ariR	STRESS		Escherichia_coli
+acrF	AMR	EFFLUX	Escherichia_coli
+mdtM	AMR	EFFLUX	Escherichia_coli
+fieF	STRESS		Escherichia_coli
+asr	STRESS		Escherichia_coli
+terD	STRESS	TELLURIUM	Escherichia_coli
+terZ	STRESS	TELLURIUM	Escherichia_coli
+terW	STRESS	TELLURIUM	Escherichia_coli
+mchF	VIRULENCE		Escherichia_coli
+mchB	VIRULENCE		Escherichia_coli
+iha	VIRULENCE		Escherichia_coli
+blaEC	AMR	BETA-LACTAM	Escherichia_coli
+aaiC	VIRULENCE		Escherichia_coli
+fdeC	VIRULENCE		Escherichia_coli
+iucA	VIRULENCE		Escherichia_coli
+iucB	VIRULENCE		Escherichia_coli
+iucC	VIRULENCE		Escherichia_coli
+iucD	VIRULENCE		Escherichia_coli
+iutA	VIRULENCE		Escherichia_coli
+sat	VIRULENCE		Escherichia_coli
+pic	VIRULENCE		Escherichia_coli
+inlK	VIRULENCE		Listeria_monocytogenes
+vga(G)	AMR	LINCOSAMIDE	Listeria_monocytogenes
+inl-lmo0514	VIRULENCE		Listeria_monocytogenes
+inlI	VIRULENCE		Listeria_monocytogenes
+inlB	VIRULENCE		Listeria_monocytogenes
+lntA	VIRULENCE		Listeria_monocytogenes
+inlC	VIRULENCE		Listeria_monocytogenes
+inlP	VIRULENCE		Listeria_monocytogenes
+cadA	STRESS	CADMIUM	Listeria_monocytogenes
+cadC	STRESS	CADMIUM	Listeria_monocytogenes
+arsB	STRESS	ARSENIC	Listeria_monocytogenes
+arsA	STRESS	ARSENIC	Listeria_monocytogenes
+arsR	STRESS	ARSENIC	Listeria_monocytogenes
+arsD	STRESS	ARSENIC	Listeria_monocytogenes
+arsD2	STRESS	ARSENIC	Listeria_monocytogenes
+fosX	AMR	FOSFOMYCIN	Listeria_monocytogenes
+fosA	AMR	FOSFOMYCIN	Pseudomonas_aeruginosa
+blaOXA-486	AMR	BETA-LACTAM	Pseudomonas_aeruginosa
+merE	STRESS	MERCURY	Pseudomonas_aeruginosa
+merD	STRESS	MERCURY	Pseudomonas_aeruginosa
+merF	STRESS	MERCURY	Pseudomonas_aeruginosa
+merP	STRESS	MERCURY	Pseudomonas_aeruginosa
+merT	STRESS	MERCURY	Pseudomonas_aeruginosa
+merR	STRESS	MERCURY	Pseudomonas_aeruginosa
+crpP	AMR	FLUOROQUINOLONE	Pseudomonas_aeruginosa
+blaPDC-3	AMR	BETA-LACTAM	Pseudomonas_aeruginosa
+aph(3')-IIb	AMR	AMINOGLYCOSIDE	Pseudomonas_aeruginosa
+catB7	AMR	PHENICOL	Pseudomonas_aeruginosa
+mexX	AMR	EFFLUX	Pseudomonas_aeruginosa
+mexA	AMR	EFFLUX	Pseudomonas_aeruginosa
+mexE	AMR	EFFLUX	Pseudomonas_aeruginosa
+fieF	STRESS		Salmonella_enterica
+spvD	VIRULENCE		Salmonella_enterica
+golS	STRESS	GOLD	Salmonella_enterica
+golT	STRESS	COPPER/GOLD	Salmonella_enterica
+mdsA	AMR	EFFLUX	Salmonella_enterica
+mdsB	AMR	EFFLUX	Salmonella_enterica
+sodC1	VIRULENCE		Salmonella_enterica
+sinH	VIRULENCE		Salmonella_enterica
+lpfB	VIRULENCE		Salmonella_enterica
+gtgA	VIRULENCE		Salmonella_enterica
+iroB	VIRULENCE		Salmonella_enterica
+iroC	VIRULENCE		Salmonella_enterica
+invA	VIRULENCE		Salmonella_enterica
+sey	VIRULENCE		Staphylococcus_aureus
+mco	STRESS	COPPER	Staphylococcus_aureus
+mepA	AMR	TETRACYCLINE	Staphylococcus_aureus
+blaI	AMR	BETA-LACTAM	Staphylococcus_aureus
+blaR1	AMR	BETA-LACTAM	Staphylococcus_aureus
+blaPC1	AMR	BETA-LACTAM	Staphylococcus_aureus
+hld	VIRULENCE		Staphylococcus_aureus
+selX	VIRULENCE		Staphylococcus_aureus
+tet(38)	AMR	TETRACYCLINE	Staphylococcus_aureus
+sel27	VIRULENCE		Staphylococcus_aureus
+sel28	VIRULENCE		Staphylococcus_aureus
+seo	VIRULENCE		Staphylococcus_aureus
+sem	VIRULENCE		Staphylococcus_aureus
+sei	VIRULENCE		Staphylococcus_aureus
+seu	VIRULENCE		Staphylococcus_aureus
+sen	VIRULENCE		Staphylococcus_aureus
+fosB	AMR	FOSFOMYCIN	Staphylococcus_aureus
+hlgA	VIRULENCE		Staphylococcus_aureus
+hlgC	VIRULENCE		Staphylococcus_aureus
+hlgB	VIRULENCE		Staphylococcus_aureus
+aadD1	AMR	AMINOGLYCOSIDE	Staphylococcus_aureus
+tet(L)	AMR	TETRACYCLINE	Staphylococcus_aureus
+qacG	STRESS	QUATERNARY AMMONIUM	Staphylococcus_aureus
+lmrS	STRESS	MACROLIDE/PHENICOL	Staphylococcus_aureus
+icaC	VIRULENCE		Staphylococcus_aureus
+aur	VIRULENCE		Staphylococcus_aureus

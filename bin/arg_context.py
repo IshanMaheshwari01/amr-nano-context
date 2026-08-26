@@ -31,6 +31,12 @@ AMR_COLUMN_ALIASES = {
     "strand": ["Strand"],
     "klass": ["Class"],
     "subclass": ["Subclass"],
+    # AMRFinderPlus --plus reports three kinds of element: AMR, STRESS (metal and
+    # biocide tolerance) and VIRULENCE. Only the first is resistome. Carrying the
+    # column through lets the validation score them separately instead of mixing
+    # virulence genes into a "resistome recall" figure.
+    "element_type": ["Type"],
+    "element_subtype": ["Subtype"],
     "pct_cov": ["% Coverage of reference", "% Coverage of reference sequence"],
     "pct_id": ["% Identity to reference", "% Identity to reference sequence"],
     "method": ["Method"],
@@ -201,7 +207,7 @@ def main() -> int:
     merged["sample"] = args.sample
 
     ordered = [
-        "sample", "gene", "klass", "subclass", "pct_id", "pct_cov",
+        "sample", "gene", "element_type", "klass", "subclass", "pct_id", "pct_cov",
         "contig", "contig_len", "contig_cov", "circular",
         "mobility", "mobility_evidence", "plasmid_score", "chromosome_score",
         "host_taxon", "card_agrees", "start", "stop", "method",
@@ -211,7 +217,7 @@ def main() -> int:
     final.to_csv(args.out, sep="\t", index=False)
 
     # Compact table for MultiQC
-    mqc_cols = [c for c in ("sample", "gene", "drug_class", "contig", "mobility", "host_taxon") if c in final.columns]
+    mqc_cols = [c for c in ("sample", "gene", "element_type", "drug_class", "contig", "mobility", "host_taxon") if c in final.columns]
     final[mqc_cols].to_csv(args.out_mqc, sep="\t", index=False)
 
     summary = {
@@ -219,6 +225,7 @@ def main() -> int:
         "args_called_raw": int(n_raw),
         "args_after_filter": len(final),
         "unique_genes": int(final["gene"].nunique()) if "gene" in final.columns else 0,
+        "amr_elements": int((final["element_type"] == "AMR").sum()) if "element_type" in final.columns else None,
         "on_plasmid": int((final["mobility"] == "plasmid").sum()) if "mobility" in final.columns else 0,
         "on_chromosome": int((final["mobility"] == "chromosome").sum()) if "mobility" in final.columns else 0,
         "ambiguous": int((final["mobility"] == "ambiguous").sum()) if "mobility" in final.columns else 0,

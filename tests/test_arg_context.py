@@ -5,16 +5,16 @@ tool. The tools have their own test suites; the join and the mobility heuristic
 do not.
 """
 
-import sys
 import pathlib
+import sys
 
 import pandas as pd
 import pytest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "bin"))
 
-import arg_context  # noqa: E402
-import validate_resistome as vr  # noqa: E402
+import arg_context
+import validate_resistome as vr
 
 
 def test_mobility_high_plasmid_score():
@@ -95,3 +95,34 @@ def test_missing_required_column_fails_loudly():
     bad = pd.DataFrame(columns=["Something else"])
     with pytest.raises(SystemExit):
         arg_context.resolve_columns(bad)
+
+
+def test_type_map_prefers_truth_label_over_observed():
+    """A gene present in both should take the truth set's type, since that is the
+    reference. Observed types only fill gaps for spurious calls."""
+    truth = pd.DataFrame({"gene_norm": ["tetm"], "element_type": ["AMR"]})
+    obs = pd.DataFrame({"gene_norm": ["tetm"], "element_type": ["STRESS"]})
+    assert vr.build_type_map(truth, obs)["tetm"] == "AMR"
+
+
+def test_type_map_falls_back_to_observed_for_spurious_calls():
+    """A spurious call has no truth entry. Without the fallback it would be
+    typeless and silently dropped from every per-type figure."""
+    truth = pd.DataFrame({"gene_norm": ["tetm"], "element_type": ["AMR"]})
+    obs = pd.DataFrame({"gene_norm": ["tetm", "inlb"],
+                        "element_type": ["AMR", "VIRULENCE"]})
+    m = vr.build_type_map(truth, obs)
+    assert m["inlb"] == "VIRULENCE"
+
+
+def test_type_map_normalises_case_and_whitespace():
+    truth = pd.DataFrame({"gene_norm": ["tetm"], "element_type": ["  amr "]})
+    obs = pd.DataFrame({"gene_norm": [], "element_type": []})
+    assert vr.build_type_map(truth, obs)["tetm"] == "AMR"
+
+
+def test_type_map_handles_missing_column():
+    """Older truth sets have no element_type. Should return empty, not raise."""
+    truth = pd.DataFrame({"gene_norm": ["tetm"]})
+    obs = pd.DataFrame({"gene_norm": ["tetm"]})
+    assert vr.build_type_map(truth, obs) == {}

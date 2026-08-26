@@ -23,6 +23,7 @@ import pandas as pd
 
 GENE_COLS = ["Element symbol", "Gene symbol"]
 CLASS_COLS = ["Class"]
+TYPE_COLS = ["Type"]
 
 
 def pick(df: pd.DataFrame, candidates: list[str]) -> str | None:
@@ -70,11 +71,15 @@ def main() -> int:
             continue
         gcol = pick(df, GENE_COLS)
         ccol = pick(df, CLASS_COLS)
+        tcol = pick(df, TYPE_COLS)
         if gcol is None:
             print(f"  no gene column in {tsv}, skipping", file=sys.stderr)
             continue
         frames.append(pd.DataFrame({
             "gene": df[gcol],
+            # AMR, STRESS or VIRULENCE. --plus reports all three; only AMR is
+            # resistome, and scoring them together understates recall badly.
+            "element_type": df[tcol] if tcol else "",
             "drug_class": df[ccol] if ccol else "",
             "expected_host": organism,
         }))
@@ -82,13 +87,16 @@ def main() -> int:
             tsv.unlink()
 
     if not frames:
-        truth = pd.DataFrame(columns=["gene", "drug_class", "expected_host"])
+        truth = pd.DataFrame(columns=["gene", "element_type", "drug_class", "expected_host"])
     else:
         truth = pd.concat(frames, ignore_index=True).drop_duplicates()
 
     truth.to_csv(args.out, sep="\t", index=False)
-    print(f"[truth] {len(truth)} expected ARG/host pairs across {len(genomes)} genomes "
-          f"-> {args.out}", file=sys.stderr)
+    print(f"[truth] {len(truth)} expected element/host pairs across {len(genomes)} "
+          f"genomes -> {args.out}", file=sys.stderr)
+    if "element_type" in truth.columns and truth["element_type"].notna().any():
+        for t, n in truth["element_type"].value_counts().items():
+            print(f"         {t}: {n}", file=sys.stderr)
     return 0
 
 
