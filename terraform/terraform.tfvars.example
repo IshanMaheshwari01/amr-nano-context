@@ -1,0 +1,26 @@
+# Copy to terraform.tfvars and edit. terraform.tfvars is gitignored.
+
+aws_region   = "eu-west-1"
+project_name = "amr-nano-context"
+environment  = "dev"
+
+# Compute ceiling. 64 vCPUs is enough to run several assemblies in parallel.
+# Lower it to 16 while testing so a misconfigured pipeline cannot scale far.
+max_vcpus = 64
+
+# Spot is the default. Set false if a long metaFlye step keeps getting
+# interrupted and restarting is costing more than the On-Demand premium.
+use_spot = true
+
+# Long-read assembly intermediates are large. 200 GB is a safe starting point;
+# raise it if jobs fail with no space left on device.
+instance_ebs_size_gb = 200
+
+# Work directory objects are deleted after this many days. Published results
+# under results/ are never deleted by this rule.
+work_dir_expiry_days = 14
+
+# Set true only if the account does not already have a /aws/batch/job log
+# group. Check first with:
+#   aws logs describe-log-groups --log-group-name-prefix /aws/batch/job
+manage_batch_log_group = false
