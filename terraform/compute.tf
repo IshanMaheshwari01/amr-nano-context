@@ -28,24 +28,50 @@ locals {
     Content-Type: text/x-shellscript; charset="us-ascii"
 
     #!/bin/bash
-    set -o errexit -o nounset -o pipefail
+    # Deliberately no `set -e`: a silent failure here yields an instance that
+    # accepts jobs but cannot stage files, surfacing as a confusing exit 127
+    # inside the container rather than as a launch failure.
+    #
+    # Ordering matters more than it looks. The ECS agent starts early in boot
+    # and registers the instance as available as soon as it is up, so Batch
+    # will place jobs on a host whose user data is still running. Those jobs
+    # die at exit 127 because the CLI does not exist yet. Stopping the agent
+    # first and starting it only after the install completes makes readiness
+    # mean what Batch assumes it means.
+    #
+    # The AWS CLI comes from conda rather than the official v2 installer: the
+    # v2 binary links against host system libraries, and Nextflow bind-mounts
+    # only the install directory into each container. Minimal Biocontainers
+    # images have no libz, so a mounted v2 binary fails at the dynamic linker.
+    # A conda prefix is self-contained.
 
-    # Install AWS CLI v2 into a host directory that Nextflow will bind-mount
-    # into every job container.
-    if [ ! -x "${local.aws_cli_root}/bin/aws" ]; then
-      TMPDIR="$(mktemp -d)"
-      curl --fail --silent --show-error --location \
-        "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
-        -o "$TMPDIR/awscliv2.zip"
-      unzip -q "$TMPDIR/awscliv2.zip" -d "$TMPDIR"
-      "$TMPDIR/aws/install" \
-        --install-dir "${local.aws_cli_root}/aws-cli" \
-        --bin-dir "${local.aws_cli_root}/bin" \
-        --update
-      rm -rf "$TMPDIR"
+    echo "=== nextflow bootstrap starting $(date -Is) ==="
+
+    systemctl stop ecs 2>/dev/null || echo "ecs service not yet running"
+
+    if [ -x "${local.aws_cli_root}/bin/aws" ]; then
+      echo "AWS CLI already present"
+    else
+      curl --fail --silent --show-error --location --retry 5 \
+        "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" \
+        -o /tmp/miniconda.sh
+
+      bash /tmp/miniconda.sh -b -f -p "${local.aws_cli_root}"
+      rm -f /tmp/miniconda.sh
+
+      "${local.aws_cli_root}/bin/conda" install -y -q -c conda-forge awscli
+      "${local.aws_cli_root}/bin/conda" clean -afy
     fi
 
-    "${local.aws_cli_root}/bin/aws" --version
+    if "${local.aws_cli_root}/bin/aws" --version; then
+      echo "=== nextflow bootstrap OK $(date -Is) ==="
+      touch /var/log/nextflow-bootstrap-ok
+    else
+      echo "=== nextflow bootstrap FAILED: staging will not work ==="
+    fi
+
+    # Only now is the host genuinely ready to accept work.
+    systemctl start ecs
 
     --==BATCH-BOUNDARY==--
   EOT
@@ -130,9 +156,17 @@ resource "aws_batch_compute_environment" "main" {
     subnets            = aws_subnet.public[*].id
     security_group_ids = [aws_security_group.batch.id]
 
+    # Pinned to an explicit version, not "$Latest". AWS Batch resolves the
+    # launch template version once when the compute environment is created and
+    # caches it, so updating the template afterwards has no effect on an
+    # existing environment: instances keep booting the version that was current
+    # at creation time, while the console reports "$Latest" and the template
+    # default sits several versions ahead. Referencing latest_version makes any
+    # template change force a compute environment replacement, which is the
+    # only thing that actually propagates it.
     launch_template {
       launch_template_id = aws_launch_template.batch.id
-      version            = "$Latest"
+      version            = aws_launch_template.batch.latest_version
     }
 
     tags = {

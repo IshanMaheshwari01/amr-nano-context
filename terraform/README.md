@@ -224,3 +224,86 @@ while results are still present.
 The observability stack, Prometheus and Grafana reading the Nextflow trace
 output, lives in `observability/` and consumes the trace file that
 `conf/awsbatch.config` writes on every run.
+
+## Status
+
+The Terraform stack provisions and destroys cleanly, and the submission path is
+verified end to end: Nextflow registers job definitions, submits to the queue,
+Batch launches an instance, and the pipeline's `bin/` directory stages to S3.
+
+Per-task file staging inside the job container is **not** verified. The account
+used for development is on the restricted AWS free-tier plan, which permits only
+a small set of instance types and forced a configuration that cannot run the
+real pipeline. Closing that last step needs a paid account, at which point the
+better solution is Nextflow's Fusion filesystem or Wave containers, which remove
+the host-installed CLI requirement entirely rather than working around it.
+
+Recorded here rather than glossed over, because the failure modes below were the
+interesting part of building this.
+
+## Troubleshooting
+
+### Compute environment reports VALID while every job sits in RUNNABLE
+
+Batch reports the compute environment healthy when the environment itself is
+well-formed. Instance launch failures happen a layer below and do not surface
+there. Read the Auto Scaling activity instead:
+
+```bash
+ASG=$(aws autoscaling describe-auto-scaling-groups \
+  --query 'AutoScalingGroups[?contains(AutoScalingGroupName,`amr-nano-context`)].AutoScalingGroupName' \
+  --output text)
+aws autoscaling describe-scaling-activities --auto-scaling-group-name "$ASG" \
+  --max-items 5 --query 'Activities[].{status:StatusCode,cause:StatusMessage}' --output table
+```
+
+On the AWS free-tier plan this returns `InvalidParameterCombination - The
+specified instance type is not eligible for Free Tier`. The compute environment
+stays VALID throughout. Free-tier eligible x86 types are limited to
+`t3.micro`, `t3.small`, `c7i-flex.large` and `m7i-flex.large`; the `t4g` family
+is Graviton and cannot run amd64 Biocontainers images.
+
+### Launch template changes have no effect
+
+AWS Batch resolves `$Latest` **once**, when the compute environment is created,
+and caches that version. Updating the template afterwards changes nothing:
+instances keep booting the version current at creation time while the console
+still reports `$Latest` and the template default sits several versions ahead.
+
+Confirm which version an instance actually booted:
+
+```bash
+aws ec2 describe-instances --instance-ids <id> \
+  --query 'Reservations[0].Instances[0].Tags[?Key==`aws:ec2launchtemplate:version`].Value' --output text
+```
+
+This module therefore pins `version = aws_launch_template.batch.latest_version`
+rather than `$Latest`, so any template change forces a compute environment
+replacement, which is the only thing that propagates it.
+
+### Container fails with exit 127 and "No such file or directory" for the AWS CLI
+
+Two distinct causes, both timing or linkage rather than a missing install.
+
+The ECS agent registers the instance as available as soon as it starts, which is
+before user data has finished. Batch places jobs on a host that is not ready and
+they die at exit 127. The user data stops the `ecs` service first and starts it
+only after the install completes.
+
+Separately, the official AWS CLI v2 binary links against the host's system
+libraries, and Nextflow bind-mounts only the install directory into the
+container. Minimal Biocontainers images have no `libz`, so a mounted v2 binary
+fails at the dynamic linker with `libz.so.1: cannot open shared object file`.
+The CLI is installed via conda instead, whose prefix is self-contained.
+
+### Provider produced inconsistent final plan
+
+AWS provider 5.x sometimes plans an in-place compute environment update, then
+discovers during apply that replacement is required, and cannot switch. The
+apply aborts partway, leaving state out of step with reality. Force the
+replacement explicitly:
+
+```bash
+terraform refresh
+terraform apply -replace=aws_batch_compute_environment.main
+```
