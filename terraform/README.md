@@ -307,3 +307,15 @@ replacement explicitly:
 terraform refresh
 terraform apply -replace=aws_batch_compute_environment.main
 ```
+
+### Destroy fails: "Cannot delete a policy attached to entities"
+
+The `nextflow_client` policy is created but not attached by Terraform, because
+attaching it means creating an IAM user with access keys, and those keys would
+be written into state in plaintext. The attachment is therefore a manual step,
+and Terraform does not know about it at destroy time. Detach before destroying:
+
+```bash
+aws iam detach-user-policy --user-name YOUR_IAM_USER \
+  --policy-arn "$(terraform output -raw nextflow_client_policy_arn)"
+```
