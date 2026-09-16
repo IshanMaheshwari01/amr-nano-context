@@ -42,9 +42,27 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Resolve Nextflow version
+        id: nxf
+        env:
+          REQUESTED: ${{ matrix.nextflow }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$REQUESTED" = "latest" ]; then
+            # get.nextflow.io does not accept the literal 'latest' tag
+            # (it expands to /releases/vlatest/nextflow and 403s), so ask
+            # GitHub for the actual latest release tag and strip the leading v.
+            TAG=$(gh api repos/nextflow-io/nextflow/releases/latest --jq .tag_name)
+            VERSION=${TAG#v}
+          else
+            VERSION=$REQUESTED
+          fi
+          echo "Using Nextflow version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Install Nextflow
         env:
-          NXF_VER: ${{ matrix.nextflow }}
+          NXF_VER: ${{ steps.nxf.outputs.version }}
         run: |
           curl -fsSL https://get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
@@ -57,7 +75,7 @@ jobs:
 
       - name: Run pipeline in stub mode
         env:
-          NXF_VER: ${{ matrix.nextflow }}
+          NXF_VER: ${{ steps.nxf.outputs.version }}
         run: |
           nextflow run . -profile test -stub-run --outdir results_test
 
