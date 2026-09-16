@@ -25,5 +25,9 @@ truth.write_text(
     "tet(M)\tTETRACYCLINE\tEnterococcus_faecalis\n"
 )
 
+db_stub = pathlib.Path(__file__).parent / "db_stub"
+db_stub.mkdir(exist_ok=True)
+(db_stub / ".gitkeep").touch()
+
 print(f"wrote {out}")
 print(f"wrote {truth}")

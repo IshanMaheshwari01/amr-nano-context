@@ -1,0 +1,27 @@
+# Terraform state contains resource attributes in plaintext. Never commit it.
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform.tfstate.lock.info
+
+# Provider binaries and modules, restored by terraform init.
+.terraform/
+.terraform.lock.hcl.bak
+
+# Account-specific values.
+terraform.tfvars
+*.auto.tfvars
+!terraform.tfvars.example
+
+# Saved plans can contain sensitive values.
+*.tfplan
+tfplan
+plan.out
+
+# Editor and OS noise.
+*.swp
+.DS_Store
+
+# The dependency lock file SHOULD be committed. It is listed here only as a
+# reminder not to add it to the ignore list above:
+#   .terraform.lock.hcl
