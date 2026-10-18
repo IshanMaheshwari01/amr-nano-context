@@ -161,7 +161,7 @@ These are real and are not worked around:
 
 ## Relationship to nf-core/mag
 
-[nf-core/mag](https://nf-co.re/mag) is the production-grade choice for general
+[nf-core/mag](https://nf-co.re/mag) is the better choice for general
 metagenome assembly and binning, and it is more thoroughly tested than this. This
 pipeline is deliberately narrower: it exists to do the ARG-to-context join, which mag
 does not do, and to be small enough to read end to end. Module structure and config
