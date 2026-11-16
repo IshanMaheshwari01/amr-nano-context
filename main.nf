@@ -53,10 +53,11 @@ def helpMessage() {
 workflow {
 
     // Nextflow 26 does not allow statements at the top level of a script, so
-    // these live inside the entry workflow rather than above it.
+    // these live inside the entry workflow rather than above it. `return`
+    // is also banned in a workflow body since 26, hence exit 0.
     if (params.help) {
         helpMessage()
-        return
+        exit 0
     }
 
     if (!params.input)  { error "Missing --input samplesheet. Run with --help." }
