@@ -116,31 +116,24 @@ floor. The `laptop` profile caps resources at 6 CPUs and 12 GB.
 
 ## Design notes
 
-**Container tags are pinned in one file.** `conf/containers.config` holds every image
-tag. Nothing else references a container. When a tag rots there is exactly one file to
-edit.
-
-**Thresholds live in config, not in code.** Identity, coverage and the plasmid-score
-cutoff are `params`, set in `conf/modules.config`. Changing an ARG calling threshold
-does not mean touching the process that runs the tool.
-
-**Two ARG databases on purpose.** AMRFinderPlus drives the results table; CARD via
-ABRicate runs alongside it and its agreement is recorded per contig. Where they disagree
-is worth knowing, and a resistome reported from a single database hides that.
-
-**"Ambiguous" is an allowed answer.** The mobility heuristic returns `ambiguous` rather
-than defaulting to chromosome when neither geNomad nor circularity gives a confident
-signal. A pipeline that always commits produces a cleaner table and a worse one.
-
-**The stub run is the CI test.** Every process has a `stub:` block, so CI can execute
-the whole DAG in seconds without databases or containers. It proves the channel wiring,
-not the biology. The biology is proved by the mock community run.
-
-**Resource requests clamp to the host.** Nextflow's local executor errors outright when a
-task asks for more CPU or RAM than the machine has, so a config written on a 16 GB desktop
-would fail on a 4 GB CI runner. `check_max` clamps to the host when running locally and
-leaves the request alone when `cap_resources_to_host = false`, which is what a cluster
-profile sets: the login node's specs say nothing about the compute nodes.
+- Container tags are pinned in one file (`conf/containers.config`). When a tag
+  rots there is exactly one file to edit.
+- Identity, coverage and the plasmid-score cutoff are `params` in
+  `conf/modules.config`, not hard-coded in the processes.
+- Two ARG databases on purpose: AMRFinderPlus drives the results table, CARD
+  via ABRicate runs alongside it and its agreement is recorded per contig.
+  Where they disagree is worth knowing, and a single-database resistome hides
+  that.
+- The mobility heuristic returns `ambiguous` rather than defaulting to
+  chromosome when neither geNomad nor circularity gives a confident signal.
+  A pipeline that always commits produces a cleaner table and a worse one.
+- Every process has a `stub:` block, so CI executes the whole DAG in seconds
+  without databases or containers. That proves the channel wiring, not the
+  biology; the biology is proved by the mock community run.
+- `check_max` clamps resource requests to the host when running locally
+  (Nextflow's local executor errors outright if a task asks for more CPU or
+  RAM than the machine has) and leaves them alone when
+  `cap_resources_to_host = false`, which the cluster profiles set.
 
 ## Known limitations
 
