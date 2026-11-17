@@ -3,7 +3,7 @@
 Long-read metagenomic resistome profiling that reports where each resistance gene is,
 not just that it is there.
 
-The validation numbers are also up as a small interactive [dashboard](https://ishanmaheshwari01.github.io/amr-nano-context/docs/).
+The validation numbers are also in an interactive R Shiny app (`app.R`, run with `Rscript -e 'shiny::runApp()'`).
 
 [![CI](https://github.com/IshanMaheshwari01/amr-nano-context/actions/workflows/ci.yml/badge.svg)](https://github.com/IshanMaheshwari01/amr-nano-context/actions/workflows/ci.yml)
 
